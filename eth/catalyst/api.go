@@ -530,7 +530,7 @@ func (api *ConsensusAPI) GetBlobsV2(hashes []common.Hash) ([]*engine.BlobAndProo
 		getBlobsV2RequestMiss.Inc(1)
 		return nil, nil
 	}
-	getBlobsV2RequestMiss.Inc(1)
+	getBlobsV2RequestHit.Inc(1)
 
 	// pull up the blob hashes
 	var (
