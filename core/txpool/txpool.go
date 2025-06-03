@@ -323,18 +323,18 @@ func (p *TxPool) GetBlobs(vhashes []common.Hash) []*types.BlobTxSidecar {
 	return nil
 }
 
-// HasBlobs will return true if all the vhashes are available in the same subpool.
-func (p *TxPool) HasBlobs(vhashes []common.Hash) bool {
+// AvailableBlobs will return the number of vhashes that are available in the same subpool.
+func (p *TxPool) AvailableBlobs(vhashes []common.Hash) int {
 	for _, subpool := range p.subpools {
 		// It's an ugly to assume that only one pool will be capable of returning
 		// anything meaningful for this call, but anything else requires merging
 		// partial responses and that's too annoying to do until we get a second
 		// blobpool (probably never).
-		if subpool.HasBlobs(vhashes) {
-			return true
+		if count := subpool.AvailableBlobs(vhashes); count != 0 {
+			return count
 		}
 	}
-	return false
+	return 0
 }
 
 // Add enqueues a batch of transactions into the pool if they are valid. Due

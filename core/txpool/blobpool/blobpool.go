@@ -1332,17 +1332,19 @@ func (p *BlobPool) GetBlobs(vhashes []common.Hash) []*types.BlobTxSidecar {
 	return sidecars
 }
 
-func (p *BlobPool) HasBlobs(vhashes []common.Hash) bool {
+// AvailableBlobs returns the number of blobs that are available in the subpool.
+func (p *BlobPool) AvailableBlobs(vhashes []common.Hash) int {
+	available := 0
 	for _, vhash := range vhashes {
 		// Retrieve the datastore item (in a short lock)
 		p.lock.RLock()
 		_, exists := p.lookup.storeidOfBlob(vhash)
 		p.lock.RUnlock()
-		if !exists {
-			return false
+		if exists {
+			available++
 		}
 	}
-	return true
+	return available
 }
 
 // Add inserts a set of blob transactions into the pool if they pass validation (both

@@ -1068,10 +1068,10 @@ func (pool *LegacyPool) GetBlobs(vhashes []common.Hash) []*types.BlobTxSidecar {
 	return nil
 }
 
-// HasBlobs is not supported by the legacy transaction pool, it is just here to
+// AvailableBlobs is not supported by the legacy transaction pool, it is just here to
 // implement the txpool.SubPool interface.
-func (pool *LegacyPool) HasBlobs(vhashes []common.Hash) bool {
-	return false
+func (pool *LegacyPool) AvailableBlobs(vhashes []common.Hash) int {
+	return 0
 }
 
 // Has returns an indicator whether txpool has a transaction cached with the

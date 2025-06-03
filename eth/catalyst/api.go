@@ -36,6 +36,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth/ethconfig"
 	"github.com/ethereum/go-ethereum/internal/version"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/metrics"
 	"github.com/ethereum/go-ethereum/miner"
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/params"
@@ -115,6 +116,17 @@ var caps = []string{
 	"engine_getPayloadBodiesByRangeV2",
 	"engine_getClientVersionV1",
 }
+
+var (
+	// Number of blobs requested via getBlobsV2
+	getBlobsRequestedCounter = metrics.NewRegisteredCounter("engine/getblobs/requested", nil)
+	// Number of blobs requested via getBlobsV2 that are present in the blobpool
+	getBlobsAvailableCounter = metrics.NewRegisteredCounter("engine/getblobs/available", nil)
+	// Number of times getBlobsV2 responded with “hit”
+	getBlobsV2RequestHit = metrics.NewRegisteredCounter("engine/getblobs/hit", nil)
+	// Number of times getBlobsV2 responded with “miss”
+	getBlobsV2RequestMiss = metrics.NewRegisteredCounter("engine/getblobs/miss", nil)
+)
 
 type ConsensusAPI struct {
 	eth *eth.Ethereum
@@ -510,10 +522,15 @@ func (api *ConsensusAPI) GetBlobsV2(hashes []common.Hash) ([]*engine.BlobAndProo
 		return nil, engine.TooLargeRequest.With(fmt.Errorf("requested blob count too large: %v", len(hashes)))
 	}
 
+	available := api.eth.TxPool().AvailableBlobs(hashes)
+	getBlobsRequestedCounter.Inc(int64(len(hashes)))
+	getBlobsAvailableCounter.Inc(int64(available))
 	// Optimization: check first if all blobs are available, if not, return empty response
-	if !api.eth.TxPool().HasBlobs(hashes) {
+	if available != len(hashes) {
+		getBlobsV2RequestMiss.Inc(1)
 		return nil, nil
 	}
+	getBlobsV2RequestMiss.Inc(1)
 
 	// pull up the blob hashes
 	var (
